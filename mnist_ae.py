@@ -1,100 +1,80 @@
 import tensorflow as tf
-import numpy as np
-
 import tensorflow.examples.tutorials.mnist
-import mnist_imaging
-
-mnist_data = tensorflow.examples.tutorials.mnist.input_data.read_data_sets("MNIST_data/", one_hot=True)
-
-def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
-
-x = tf.placeholder(tf.float32, shape=[None, 784])
-
-wz = tf.Variable(tf.random_normal([784, 200]), dtype=tf.float32)
-bz = tf.Variable(tf.zeros([200], dtype=tf.float32))
-
-mult = tf.matmul(x, wz)
-add = mult# + bz
-
-#z = tf.nn.tanh(add)
-z = (add)
 
 
-#wy = tf.Variable(tf.random_normal([20, 784], dtype=tf.float32))
-wy = tf.transpose(wz)
-by = tf.Variable(tf.zeros([784], dtype=tf.float32))
+class mnist_ae:
+    def __init__(self):
+        self.mnist_data = tensorflow.examples.tutorials.mnist.input_data.read_data_sets("MNIST_data/", one_hot=True)
 
-mult2 = tf.matmul(z, wy)
-add2 = mult2# + by
+        self.x = tf.placeholder(tf.float32, shape=[None, 784])
 
+        self.wz = tf.Variable(tf.random_normal([784, 200]), dtype=tf.float32)
+        self.bz = tf.Variable(tf.zeros([200], dtype=tf.float32))
 
-y = (tf.sigmoid(add2))
-
-cost = tf.reduce_mean(tf.square(x - y))
-#cross_entropy = tf.reduce_mean(-tf.reduce_sum(x * tf.log(y), reduction_indices=[1]))
-
-train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cost)
-
-#PREP
-init = tf.initialize_all_variables()
-sess = tf.Session()
-sess.run(init)
-
-#TRAIN
-def train(reps):
-    for i in range(reps):
-        batch_xs, batch_ys = mnist_data.train.next_batch(50)
-        sess.run(train_step, feed_dict={x: batch_xs})
+        self.z = tf.matmul(self.x, self.wz)
 
 
-def reconstruct_num(num):
-    reconstructed_num = sess.run(y, feed_dict={x: num})
-    return reconstructed_num
+        self.wy = tf.Variable(tf.random_normal([200, 784], dtype=tf.float32))
+        #self.wy = tf.transpose(self.wz)
+        self.by = tf.Variable(tf.zeros([784], dtype=tf.float32))
 
+        self.y = tf.sigmoid(tf.matmul(self.z, self.wy))
 
-def get_num_and_recon():
-    image_orig = mnist_data.test.next_batch(1)[0]
-    image = reconstruct_num(image_orig)
-    return image_orig, image
+        self.cost = tf.reduce_mean(tf.square(self.x - self.y))
+        #cross_entropy = tf.reduce_mean(-tf.reduce_sum(x * tf.log(y), reduction_indices=[1]))
 
+        self.train_step = tf.train.GradientDescentOptimizer(0.5).minimize(self.cost)
 
-def get_weights_z():
-    return sess.run(wz)
+        #PREP
+        init = tf.initialize_all_variables()
+        self.sess = tf.Session()
+        self.sess.run(init)
 
+    #TRAIN
+    def train(self, reps):
+        for i in range(reps):
+            batch_xs, batch_ys = self.mnist_data.train.next_batch(50)
+            self.sess.run(self.train_step, feed_dict={self.x: batch_xs})
 
-def get_weights_y():
-    return sess.run(wy)
+    def reconstruct_num(self, num):
+        reconstructed_num = self.sess.run(self.y, feed_dict={self.x: num})
+        return reconstructed_num
 
+    def get_num_and_recon(self):
+        image_orig = self.mnist_data.test.next_batch(1)[0]
+        image = self.reconstruct_num(image_orig)
+        return image_orig, image
 
-def get_x_and_y():
-    return sess.run((x, y))
+    def get_weights_z(self):
+        return self.sess.run(self.wz)
 
+    def get_weights_y(self):
+        return self.sess.run(self.wy)
 
-def get_next_z():
-    image = mnist_data.test.next_batch(1)[0]
-    return sess.run(z, feed_dict={x: image})
+    def get_x_and_y(self):
+        return self.sess.run((self.x, self.y))
 
+    def get_next_z(self):
+        image = self.mnist_data.test.next_batch(1)[0]
+        return self.sess.run(self.z, feed_dict={self.x: image})
 
-def get_bias():
-    return sess.run((by, bz))
+    def get_bias(self):
+        return self.sess.run((self.by, self.bz))
 
-
-def get_all_graph_values():
-    image = mnist_data.test.next_batch(1)[0]
-    gz, gy, gwz, gwy, gbz, gby = sess.run(( z, y, wz, wy, bz, by), feed_dict={x: image})
-    print("\nX VALUES:")
-    print(image)
-    print("\nZ VALUES:")
-    print(gz)
-    print("\nY VALUES:")
-    print(gy)
-    print("\nZ BIAS:")
-    print(gbz)
-    print("\nY BIAS:")
-    print(gby)
-    print("\nWEIGHTS TO Z:")
-    print(gwz)
-    print("\nWEIGHTS TO Y:")
-    print(gwy)
+    def get_all_graph_values(self):
+        image = self.mnist_data.test.next_batch(1)[0]
+        gz, gy, gwz, gwy, gbz, gby = self.sess.run((self.z, self.y, self.wz, self.wy, self.bz, self.by), feed_dict={self.x: image})
+        print("\nX VALUES:")
+        print(image)
+        print("\nZ VALUES:")
+        print(gz)
+        print("\nY VALUES:")
+        print(gy)
+        print("\nZ BIAS:")
+        print(gbz)
+        print("\nY BIAS:")
+        print(gby)
+        print("\nWEIGHTS TO Z:")
+        print(gwz)
+        print("\nWEIGHTS TO Y:")
+        print(gwy)
