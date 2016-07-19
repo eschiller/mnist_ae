@@ -3,27 +3,25 @@ import tensorflow.examples.tutorials.mnist
 
 
 class mnist_ae:
-    def __init__(self):
+    def __init__(self, hlayers=196, learn_rate=0.1, optimizer=tf.train.GradientDescentOptimizer):
         self.mnist_data = tensorflow.examples.tutorials.mnist.input_data.read_data_sets("MNIST_data/", one_hot=True)
 
         self.x = tf.placeholder(tf.float32, shape=[None, 784])
 
-        self.wz = tf.Variable(tf.random_normal([784, 200]), dtype=tf.float32)
-        self.bz = tf.Variable(tf.zeros([200], dtype=tf.float32))
+        self.wz = tf.Variable(tf.random_normal([784, hlayers]), dtype=tf.float32)
+        self.bz = tf.Variable(tf.zeros([hlayers], dtype=tf.float32))
 
-        self.z = tf.matmul(self.x, self.wz)
+        self.z = tf.tanh(tf.matmul(self.x, self.wz))# + self.bz
 
-
-        self.wy = tf.Variable(tf.random_normal([200, 784], dtype=tf.float32))
-        #self.wy = tf.transpose(self.wz)
+        self.wy = tf.Variable(tf.random_normal([hlayers, 784], dtype=tf.float32))
         self.by = tf.Variable(tf.zeros([784], dtype=tf.float32))
 
-        self.y = tf.sigmoid(tf.matmul(self.z, self.wy))
+        self.y = tf.sigmoid(tf.matmul(self.z, self.wy))# + self.by
 
         self.cost = tf.reduce_mean(tf.square(self.x - self.y))
         #cross_entropy = tf.reduce_mean(-tf.reduce_sum(x * tf.log(y), reduction_indices=[1]))
 
-        self.train_step = tf.train.GradientDescentOptimizer(0.5).minimize(self.cost)
+        self.train_step = optimizer(learn_rate).minimize(self.cost)
 
         #PREP
         init = tf.initialize_all_variables()
